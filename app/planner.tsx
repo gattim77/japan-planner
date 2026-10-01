@@ -45,14 +45,38 @@ const city=detail?.type==='city'?cities.find(c=>c.id===detail.id):null,event=det
 const eventOccurrence=detail?.occurrence??allEvents.find(e=>e.id===event?.id)??occurrences(horizon.start,horizon.end).find(e=>e.id===event?.id);
 const moveDrag=useRef<{x:number;width:number;start:string;end:string}|null>(null);const [prefOptions,setPrefOptions]=useState<any[]>([]);
 const currentRef=useRef(input);currentRef.current=input;
+const planningRequest=useRef(0);
+useEffect(()=>()=>{planningRequest.current++},[]);
 useEffect(()=>{fetch('/japan.geojson').then(r=>r.json()).then((j:any)=>setPrefOptions(j.features.map((f:any)=>f.properties))).catch(()=>{});try{setDark(localStorage.getItem('tabi-theme')==='dark')}catch{}api('/api/account').then(setAccount).catch(()=>{});loadSaved();if(shareToken)api('/api/share/'+shareToken).then(j=>{setName(j.name);apply(j.payload);setView('itinerary')}).catch(e=>setError(e.message))},[]);
 useEffect(()=>{document.documentElement.classList.toggle('dark',dark);try{localStorage.setItem('tabi-theme',dark?'dark':'light')}catch{}},[dark]);
 useEffect(()=>{const pop=()=>setView(location.pathname.split('/')[1]||'explore');addEventListener('popstate',pop);return()=>removeEventListener('popstate',pop)},[]);
 async function loadSaved(){try{const [s,t]=await Promise.all([api('/api/saved-events'),api('/api/trips')]);setSavedEvents(s.events);setTrips(t.trips)}catch{}}
 function go(id:string){setView(id);setMobile(false);if(!shareToken)history.pushState({},'',id==='explore'?'/':'/'+id)}
 function apply(p:any){const i=p.input;setStart(i.start);setEnd(i.end);setMode(i.mode);setIntensity(i.intensity);setTransport(i.transport);setEntry(i.entry);setExit(i.exit??'');setLocked(i.locked);setExcluded(i.excluded);setSavedCities(i.saved.filter((s:string)=>cities.some(c=>c.id===s)));setJourney(p.journey)}
-async function generate(p=input,auto=false){if(shareToken)return;setBusy(true);setError('');try{const j=await api('/api/planner','POST',p);if(!auto&&journey)setLocalVersions(v=>[{input,journey},...v].slice(0,10));setJourney(j.journey);if(!auto){if(tripId){await api('/api/trips/'+tripId,'PATCH',{action:'regenerate',input:p});await loadSaved()}setModal(null);go('itinerary');toast.success('Your journey is ready.')}}catch(e:any){setError(e.message);if(!auto)toast.error(e.message)}finally{setBusy(false)}}
-useEffect(()=>{if(!journey||shareToken)return;const abort=new AbortController();const timer=setTimeout(()=>{setBusy(true);api('/api/planner','POST',currentRef.current).then(j=>{if(!abort.signal.aborted){setJourney(j.journey);setError('')}}).catch(e=>{if(!abort.signal.aborted)setError(e.message)}).finally(()=>{if(!abort.signal.aborted)setBusy(false)})},400);return()=>{clearTimeout(timer);abort.abort()}},[start,end,mode,intensity,transport,entry,exit]);
+async function generate(p=input,auto=false){
+ if(shareToken)return;
+ const request=++planningRequest.current,key=JSON.stringify(p);
+ const isCurrent=()=>request===planningRequest.current&&key===JSON.stringify(currentRef.current);
+ setBusy(true);setError('');
+ try{
+  const j=await api('/api/planner','POST',p);
+  if(!isCurrent())return;
+  if(!auto&&journey)setLocalVersions(v=>[{input,journey},...v].slice(0,10));
+  setJourney(j.journey);
+  if(!auto){
+   setModal(null);go('itinerary');toast.success('Your journey is ready.');
+   if(tripId){await api('/api/trips/'+tripId,'PATCH',{action:'regenerate',input:p});await loadSaved()}
+  }
+ }catch(e:any){if(isCurrent()){setError(e.message);if(!auto)toast.error(e.message)}}
+ finally{if(request===planningRequest.current)setBusy(false)}
+}
+useEffect(()=>{
+ if(!journey||shareToken)return;
+ // Invalidate running requests immediately, before the debounce starts another one.
+ planningRequest.current++;setBusy(true);
+ const timer=setTimeout(()=>{void generate(currentRef.current,true)},400);
+ return()=>{clearTimeout(timer);planningRequest.current++};
+},[start,end,mode,intensity,transport,entry,exit]);
 useEffect(()=>{const mc=(document as any).modelContext;if(!mc?.registerTool)return;const life=new AbortController();Promise.resolve(mc.registerTool({name:'set_trip_window',description:'Change the visible trip dates; no booking or saved-trip mutation.',inputSchema:{type:'object',properties:{start:{type:'string'},end:{type:'string'}},required:['start','end'],additionalProperties:false},annotations:{readOnlyHint:false},execute:(p:any)=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(p.start)||!/^\d{4}-\d{2}-\d{2}$/.test(p.end)||days(p.start,p.end)<1||days(p.start,p.end)>60||p.start<rollingWindow().start||p.end>rollingWindow().end||['start','end'].some(k=>{const d=new Date(p[k]+'T00:00:00Z');return Number.isNaN(d.getTime())||d.toISOString().slice(0,10)!==p[k]}))throw new Error('Invalid travel window.');setStart(p.start);setEnd(p.end);return {start:p.start,end:p.end}}},{signal:life.signal})).catch(()=>{});return()=>life.abort()},[]);
 useEffect(()=>{if(modal==='versions'&&tripId)api('/api/trips/'+tripId).then(j=>setVersions(j.versions)).catch(e=>toast.error(e.message));},[modal,tripId]);
 function shift(n:number){const delta=clampShift(start,end,n,horizon.start,horizon.end);setStart(dateAdd(start,delta));setEnd(dateAdd(end,delta))}
