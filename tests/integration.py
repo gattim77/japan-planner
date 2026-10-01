@@ -15,11 +15,17 @@ status,catalog=call('/api/planner?start=2026-10-01&end=2027-10-01');assert statu
 assert call('/api/planner?start=2026-02-30&end=2026-03-02')[0]==400
 assert call('/api/planner',{**p,'mustAttend':['jp-41-03']})[0]==400
 status,j=call('/api/planner',p);assert status==200,j
+maximum={**p,'mode':'Maximum Festivals','exit':'osaka'}
+status,m=call('/api/planner',maximum);assert status==200,m
+assert m['journey']['stops'][0]['cityId']=='tokyo' and m['journey']['stops'][-1]['cityId']=='osaka'
+assert any(s['events'] for s in m['journey']['stops'])
+assert any(e['cityId']!=s['cityId'] for s in m['journey']['stops'] for e in s['events'])
+assert call('/api/planner',{**p,'exit':'unknown'})[0]==400
 journey=j['journey'];assert sum(s['nights'] for s in journey['stops'])==14
 assert all(s['events']==[] or all(e['confidence'] in ('expected','confirmed') for e in s['events']) for s in journey['stops'])
 assert len(journey['legs'])==len(journey['stops'])-1
 assert all(l['fare']>0 and l['segments'] for l in journey['legs'])
-q={**p,'locked':[{'cityId':'kyoto','nights':3}],'mustAttend':['takayama-autumn']}
+q={**p,'exit':'kyoto','locked':[{'cityId':'kyoto','nights':3}],'mustAttend':['takayama-autumn']}
 status,j=call('/api/planner',q);assert status==200,j
 assert any(s['cityId']=='kyoto' and s['nights']==3 for s in j['journey']['stops'])
 assert any(e['id']=='takayama-autumn' for s in j['journey']['stops'] for e in s['events'])
@@ -28,7 +34,7 @@ assert call('/api/planner',{**p,'start':'2026-02-30'})[0]==400
 assert call('/api/planner',{**p,'end':'2026-10-04','mustAttend':['takayama-autumn']})[0]==400
 assert call('/api/trips',who=None)[0]==401
 status,t=call('/api/trips',{'name':'Integration test journey','input':q});assert status==201,t
-id=t['id'];assert any(t['id']==id for t in call('/api/trips')[1]['trips'])
+id=t['id'];stored=next(t for t in call('/api/trips')[1]['trips'] if t['id']==id);assert stored['payload']['input']['exit']=='kyoto';assert stored['payload']['journey']['stops'][-1]['cityId']=='kyoto'
 assert call('/api/trips/'+id,{'action':'rename','name':'Not yours'},who='different-user',method='PATCH')[0]!=200
 assert call('/api/trips/'+id,{'action':'regenerate','input':q},method='PATCH')[0]==200
 versions=call('/api/trips/'+id)[1]['versions'];assert len(versions)==1
