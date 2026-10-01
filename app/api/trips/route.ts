@@ -1,0 +1,5 @@
+import {db,identity,ensureUser,body,fail,inputSchema} from '@/lib/server';
+import {optimize} from '@/lib/optimizer';
+import {z} from 'zod';
+export async function GET(){try{const u=await identity();const rows=await db().prepare('SELECT id,name,status,payload,share_token,created_at,updated_at FROM trips WHERE user_id=? ORDER BY updated_at DESC LIMIT 100').bind(u.id).all();return Response.json({trips:rows.results.map((r:any)=>({...r,payload:JSON.parse(r.payload)}))},{headers:{'Cache-Control':'no-store'}})}catch(e){return fail(e)}}
+export async function POST(request:Request){try{const u=await ensureUser(),p=z.object({name:z.string().trim().min(1).max(120),input:inputSchema}).parse(await body(request)),id=crypto.randomUUID(),now=new Date().toISOString();const journey=optimize(p.input);await db().prepare('INSERT INTO trips (id,user_id,name,status,payload,created_at,updated_at) VALUES (?,?,?,?,?,?,?)').bind(id,u.id,p.name,'saved',JSON.stringify({input:p.input,journey}),now,now).run();return Response.json({id,name:p.name},{status:201})}catch(e){return fail(e)}}

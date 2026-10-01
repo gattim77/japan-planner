@@ -1,0 +1,2 @@
+import {db,fail} from '@/lib/server';
+export async function GET(request:Request,{params}:any){try{const {token}=await params;if(!/^[a-f0-9-]{36}$/.test(token))return Response.json({error:'Not found'},{status:404});const r=await db().prepare('SELECT name,payload FROM trips WHERE share_token=?').bind(token).first<any>();if(!r)return Response.json({error:'This trip is private or unavailable.'},{status:404});return Response.json({name:r.name,payload:JSON.parse(r.payload)},{headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex'}})}catch(e){return fail(e)}}
