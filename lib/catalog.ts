@@ -1,4 +1,5 @@
 import researched from './researched-festivals.ts';
+import local from './local-festivals.ts';
 /** Curated source records. These are not mock records. Annual recurrence is derived,
  * never year-specific confirmation. Missing factual details remain null. */
 export const verifiedAt='2026-10-01';
@@ -15,9 +16,10 @@ export const cities:City[]=[
 {id:'tokushima',name:'Tokushima',ja:'徳島',prefecture:36,region:'Shikoku',lat:34.074,lng:134.551,description:'The birthplace of Awa dance and a gateway to the valleys of Shikoku.',source:'https://discovertokushima.net/en/',tags:['hidden','nature','culture'],attractions:['Awa Odori Kaikan','Mount Bizan'],nights:2},
 {id:'chichibu',name:'Chichibu',ja:'秩父',prefecture:11,region:'Kanto',lat:35.996,lng:139.084,description:'Mountain scenery, pilgrimage routes and a winter float festival west of Tokyo.',source:'https://www.chichibu-omotenashi.com/en/',tags:['nature','hidden','culture'],attractions:['Chichibu Shrine','Hitsujiyama Park'],nights:2},
 ];
-cities.push(...researched.venues.map(c=>({...c,region:regionFor(c.prefecture)})));
-export type RecurrenceRule={kind:'fixed'|'season'}|{kind:'weekday';weekday:number;nth:number;startOffset:number;endOffset:number};
-export type Festival={id:string;name:string;ja:string;cityId:string;type:string;month:number;startDay:number;endDay:number;importance:number;description:string;source:string;image?:string;bestTime:string;recurrence:string;endMonth?:number;rule?:RecurrenceRule;yearParity?:number;announcements?:Record<string,{start:string;end:string;source:string}>;organizerSource?:string|null;scheduleNote?:string;venue?:string;address?:string;coordinatePrecision?:string;dateEvidence?:string};
+cities.push(...researched.venues.map(c=>({...c,region:regionFor(c.prefecture)})),...local.venues.map(c=>({...c,region:regionFor(c.prefecture)})));
+export const cityById=new Map(cities.map(c=>[c.id,c]));
+export type RecurrenceRule={kind:'fixed'|'season'|'undated'}|{kind:'weekday';weekday:number;nth:number;startOffset:number;endOffset:number};
+export type Festival={sessions?:{start:string;end:string;source:string}[];archival?:boolean;researchTier?:'highlight'|'local';lastListedStart?:string;lastListedEnd?:string;searchTerms?:string;id:string;name:string;ja:string;cityId:string;type:string;month:number;startDay:number;endDay:number;importance:number;description:string;source:string;image?:string;bestTime:string;recurrence:string;endMonth?:number;rule?:RecurrenceRule;yearParity?:number;announcements?:Record<string,{start:string;end:string;source:string}>;organizerSource?:string|null;scheduleNote?:string;venue?:string;address?:string;coordinatePrecision?:string;dateEvidence?:string};
 export const festivals:Festival[]=[
 {id:'takayama-autumn',name:'Takayama Autumn Festival',ja:'秋の高山祭',cityId:'takayama',type:'Traditional matsuri',month:10,startDay:9,endDay:10,importance:10,description:'Carved floats, mechanical puppets and lantern processions honour Sakurayama Hachimangu Shrine.',source:'https://www.hida.jp/english/festivalsandevents/4000209.html',image:'https://www.hida.jp/_res/projects/hida_jp/_page_/004/000/209/113_02.jpg',bestTime:'Daytime float displays; evening procession, weather permitting',recurrence:'Annual October 9–10'},
 {id:'takayama-spring',name:'Takayama Spring Festival',ja:'春の高山祭',cityId:'takayama',type:'Shrine festival',month:4,startDay:14,endDay:15,importance:10,description:'The Sannō festival of Hie Shrine celebrates spring with ornate floats and puppet performances.',source:'https://www.hida.jp/english/festivalsandevents/4000105.html',bestTime:'Daytime displays and evening procession',recurrence:'Annual April 14–15'},
@@ -30,11 +32,13 @@ export const festivals:Festival[]=[
 {id:'chichibu-night',name:'Chichibu Night Festival',ja:'秩父夜祭',cityId:'chichibu',type:'Traditional matsuri',month:12,startDay:2,endDay:3,importance:10,description:'A winter celebration of towering floats, lanterns and fireworks in the mountains of Saitama.',source:'https://www.chichibu-omotenashi.com/en/guide/spot_09.html',bestTime:'December 3 evening is the main celebration',recurrence:'Annual December 2–3'},
 ];
 for(const f of festivals)Object.assign(f,(researched.patches as Record<string,Partial<Festival>>)[f.id]??{});
-festivals.push(...researched.festivals as Festival[]);
+festivals.push(...researched.festivals as Festival[],...local.festivals as Festival[]);
+export const festivalById=new Map(festivals.map(f=>[f.id,f]));
 export type Occurrence=Festival&{occurrenceId:string;start:string;end:string;year:number;confidence:'confirmed'|'expected'|'season';verifiedAt:string;confirmationNote:string;occurrenceSource:string};
 const iso=(year:number,month:number,day:number)=>`${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 function addDays(date:string,n:number){return new Date(Date.parse(date+'T00:00:00Z')+n*86400000).toISOString().slice(0,10)}
 export function festivalOccurrence(f:Festival,year:number):Occurrence|null{
+ if(f.archival||f.rule?.kind==='undated')return null;
  if(f.yearParity!==undefined&&year%2!==f.yearParity)return null;
  const announced=f.announcements?.[year],rule=f.rule??{kind:'fixed'},endingMonth=f.endMonth??f.month,endingYear=year+(endingMonth<f.month?1:0);
  let start=iso(year,f.month,f.startDay),end=iso(endingYear,endingMonth,Math.min(f.endDay,new Date(Date.UTC(endingYear,endingMonth,0)).getUTCDate()));
@@ -45,13 +49,13 @@ export function festivalOccurrence(f:Festival,year:number):Occurrence|null{
  }
  const confidence=announced?'confirmed':rule.kind==='season'?'season':'expected';
  if(announced){start=announced.start;end=announced.end}
- return {...f,occurrenceId:`${f.id}-${year}`,year,start,end,confidence,verifiedAt,occurrenceSource:announced?.source??f.source,confirmationNote:announced?'Dates published by an official tourism or organizer source. Daily programmes and cancellations can still change.':rule.kind==='season'?'Approximate discovery season only. These boundaries are not event dates and cannot satisfy a must-attend constraint.':'Calculated from the official annual recurrence rule. A year-specific programme has not been verified.'};
+ return {...f,occurrenceId:`${f.id}-${year}`,year,start,end,confidence,verifiedAt,occurrenceSource:announced?.source??f.source,confirmationNote:announced?'Dates published by an official tourism or organizer source. Daily programmes and cancellations can still change.':rule.kind==='season'?`${f.lastListedStart?'Previously listed '+f.lastListedStart+'; future dates are unverified. ':''}Approximate discovery season only. These boundaries are not event dates and cannot satisfy a must-attend constraint.`:'Calculated from the official annual recurrence rule. A year-specific programme has not been verified.'};
 }
 export function occurrences(start:string,end:string):Occurrence[]{
  const y=Number(start.slice(0,4)),last=Number(end.slice(0,4));if(!Number.isFinite(y)||!Number.isFinite(last)||last<y||last-y>3)return [];
- return Array.from({length:last-y+2},(_,i)=>y-1+i).flatMap(year=>festivals.map(f=>festivalOccurrence(f,year)).filter((f):f is Occurrence=>!!f)).filter(f=>f.end>=start&&f.start<=end).sort((a,b)=>a.start.localeCompare(b.start)||a.name.localeCompare(b.name));
+ return Array.from({length:last-y+2},(_,i)=>y-1+i).flatMap(year=>festivals.flatMap(f=>{const base=festivalOccurrence(f,year);if(!base)return [];const sessions=f.sessions?.filter(s=>Number(s.start.slice(0,4))===year);return sessions?.length?sessions.map((s,i)=>({...base,start:s.start,end:s.end,confidence:'confirmed' as const,occurrenceId:`${f.id}-${year}-session-${i}`,occurrenceSource:s.source,confirmationNote:'An individual session date published in the official programme. The wider festival series does not run continuously.'})):[base]})).filter(f=>f.end>=start&&f.start<=end).sort((a,b)=>a.start.localeCompare(b.start)||a.name.localeCompare(b.name));
 }
-export function confidenceLabel(e:{confidence?:string;rule?:RecurrenceRule}){return e.confidence==='confirmed'?'Announced':e.confidence==='season'||(!e.confidence&&e.rule?.kind==='season')?'Season · dates pending':'Expected annual dates'}
+export function confidenceLabel(e:{confidence?:string;rule?:RecurrenceRule;archival?:boolean}){return e.archival?'Historical listing · dates unverified':e.confidence==='confirmed'?'Announced':e.confidence==='season'||(!e.confidence&&e.rule?.kind==='season')?'Season · dates pending':e.rule?.kind==='undated'?'Dates pending':'Expected annual dates'}
 export const modes=['Maximum Festivals','Balanced Japan','Minimum Travel','Culture & History','Nature & Scenery','Photography','Food','Hidden Japan','Classic First Trip'];
 export const regions=['Hokkaido','Tohoku','Kanto','Chubu','Kansai','Chugoku','Shikoku','Kyushu'];
 export function regionFor(id:number){return id===1?'Hokkaido':id<=7?'Tohoku':id<=14?'Kanto':id<=23?'Chubu':id<=30?'Kansai':id<=35?'Chugoku':id<=39?'Shikoku':'Kyushu'}

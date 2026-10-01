@@ -8,6 +8,7 @@ assert.equal(clampShift('2026-10-03','2026-10-17',-7,'2026-10-01','2027-10-01'),
 assert.equal(clampShift('2027-09-24','2027-10-01',7,'2026-10-01','2027-10-01'),0);
 assert.equal(validCalendarDate('2027-02-29'),false);
 assert.equal(rollingWindow(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date('2026-09-30T16:00:00Z'))).start,'2026-10-01');
+assert.ok(festivals.length>2500,'National expansion should contain thousands of sourced records');
 assert.equal(new Set(festivals.map(f=>f.id)).size,festivals.length);
 assert.equal(new Set(festivals.map(f=>cities.find(c=>c.id===f.cityId).prefecture)).size,47);
 for(const f of festivals){assert.ok(cities.some(c=>c.id===f.cityId),f.id);assert.ok(/^https?:$/.test(new URL(f.source).protocol));for(const year of [2026,2027,2028]){const e=festivalOccurrence(f,year);if(!e)continue;assert.ok(validCalendarDate(e.start),f.id+' start');assert.ok(validCalendarDate(e.end),f.id+' end');assert.ok(e.end>=e.start,f.id);if(e.confidence==='confirmed'){assert.ok(f.announcements?.[year]);assert.equal(e.occurrenceSource,f.announcements[year].source)}}}
@@ -32,3 +33,14 @@ assert.ok(occurrences('2026-10-03','2026-10-17').length>9);
 const cross={...festivals[0],id:'cross-year-test',month:12,startDay:20,endMonth:1,endDay:10};
 assert.equal(festivalOccurrence(cross,2026).end,'2027-01-10');
 console.log(`Passed: rolling calendar/leap years/drag bounds; ${festivals.length} unique records across 47 prefectures; annual weekday rules, cross-month/year dates, biennial and evidence status.`);
+
+const dated=occurrences('2026-10-01','2027-10-01');
+assert.equal(new Set(dated.map(e=>e.occurrenceId)).size,dated.length);
+assert.ok(dated.every(e=>!e.archival&&e.rule?.kind!=='undated'));
+for(const e of dated){assert.ok(validCalendarDate(e.start));assert.ok(validCalendarDate(e.end));if(e.confidence==='confirmed')assert.ok(e.announcements?.[e.year]||e.sessions?.some(s=>s.start===e.start&&s.end===e.end&&s.source===e.occurrenceSource));}
+const atami=festivals.find(f=>f.ja==='熱海海上花火大会');
+assert.ok(atami?.sessions?.length>3);
+assert.ok(occurrences('2026-10-12','2026-10-12').some(e=>e.id===atami.id&&e.confidence==='confirmed'));
+assert.ok(!occurrences('2026-10-13','2026-10-13').some(e=>e.id===atami.id&&e.confidence==='confirmed'));
+assert.ok(!dated.some(e=>e.id==='local-be5276e6-b4d1-4f77-90f8-b366c8481487'&&e.confidence==='confirmed'));
+console.log('Passed: historical/undated exclusion, unique occurrence IDs, session-specific evidence, and no continuous-event invention for long listing spans.');

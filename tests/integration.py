@@ -11,7 +11,7 @@ def call(path,body=None,who=owner,method=None):
   with urllib.request.urlopen(q) as r:return r.status,json.load(r)
  except urllib.error.HTTPError as e:return e.code,json.load(e)
 p={'start':'2026-10-03','end':'2026-10-17','mode':'Balanced Japan','intensity':'Balanced','transport':'Fastest','entry':'tokyo','locked':[],'excluded':[],'mustAttend':[],'saved':[]}
-status,catalog=call('/api/planner?start=2026-10-01&end=2027-10-01');assert status==200 and catalog['coverage']=={'records':147,'prefectures':47},catalog
+status,catalog=call('/api/planner?start=2026-10-01&end=2027-10-01');assert status==200 and catalog['coverage']['records']>2500 and catalog['coverage']['prefectures']==47,catalog
 assert call('/api/planner?start=2026-02-30&end=2026-03-02')[0]==400
 assert call('/api/planner',{**p,'mustAttend':['jp-41-03']})[0]==400
 status,j=call('/api/planner',p);assert status==200,j

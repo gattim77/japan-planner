@@ -1,6 +1,91 @@
-# Festival research audit
+# National festival research audit
 
-Reviewed October 1, 2026. The catalogue now contains 147 festival records across all 47 prefectures, up from nine records. This is broad national coverage, not a claim to enumerate every neighbourhood festival in Japan.
+Reviewed October 1, 2026. **2,867 festival and ritual records**: 147 original highlights and 2,720 local additions across all 47 prefectures and 1,051 municipalities. This is a substantial national discovery index, not an inventory of every private or neighbourhood matsuri in Japan.
+
+## National research
+
+Surveyed **7,871 event entries across 394 result pages** in [JAPAN 47 GO](https://www.japan47go.travel/ja/search/result?tag=5), then fetched factual metadata from **2,910 individual festival/ritual candidate pages**. The provider explains that its database is [maintained with local governments and tourism associations](https://www.japan47go.travel/ja/about). Names, dates, venue coordinates, municipality and primary links were extracted and validated. No photos, article descriptions, contact details or copyrighted narrative were reproduced. English names are used when supplied; Japanese names and kana remain searchable. Generic English summaries are editorial labels, not translations of source articles.
+
+Automated review checked date validity, geography, cancellation/closure warnings, naming duplicates, annual recurrence evidence, mismatched programme years and unusually long date spans. Representative records and schedules were spot-checked. This does not mean every local programme was manually read end to end or independently confirmed with its organizer.
+
+Excluded **190** candidate records: 84 missing source coordinates, 59 cancellation/closure warnings, 38 existing highlight matches and nine duplicate name/venue entries. All 2,910 detail requests completed without fetch failures. Historical programmes before 2025 are retained as historical references only, excluded from upcoming date matches. Missing or conflicting dates never become confirmed occurrences.
+
+## Dates and sessions
+
+- **Announced:** a year-specific date in the municipal tourism listing, or an individually published session date. Programme changes remain possible.
+- **Expected annual dates:** an explicit annual fixed-date rule, or a reviewed weekday rule from the highlight collection.
+- **Season · dates pending:** a previously listed month/period, used as a discovery lead. It is not evidence that the festival will operate in the next year or run every day in that period.
+- **Historical / undated:** searchable in the full index, excluded from upcoming calendar matches.
+
+Long listing spans were reviewed as potential recurring programmes. For example, Atami fireworks use separately published session dates; an April–December listing is not presented as a continuous fireworks event. Water/land rituals that list the same annual date in two years do not become year-long events.
+
+The reference window October 1, 2026–October 1, 2027 has **3,188 matching occurrences**: 655 announced, 344 expected and 2189 provisional seasonal matches. Occurrence counts can exceed record counts because of sessions and overlapping annual seasons. The index contains 33 historical records and 17 records with no established season.
+
+## Product and refresh
+
+The original 147 highlights remain selectable. The local collection and full index add search/filter/pagination; upcoming views exclude historical and undated records. Calendar month filters clip overlaps to the selected window. Local source coordinates are used for discovery pins. The route optimizer still supports ten curated intercity destinations; local venues are not silently routed with invented travel times.
+
+The [full factual source index](../public/festival-sources.csv) links every record and lists programme years, session dates, uncertainty and coordinates provenance. It is downloadable in the application. Metadata is bundled as a reviewed snapshot; no background scraping or automatic date promotion is enabled.
+
+For another explicit source review, run `python3 scripts/research-national-festivals.py work/national-festival-research`, supply `existing.json` exported from the highlight catalogue, then run `python3 scripts/build-local-festivals.py work/national-festival-research` from the project root. Review exclusions and the source index, run catalogue/type/build/integration checks, then publish. These research tools use a small concurrent pool and cached metadata.
+
+## Coverage
+
+| Prefecture | Region | All records | Local additions |
+|---|---|---:|---:|
+| Hokkaido | Hokkaido | 153 | 150 |
+| Aomori | Tohoku | 63 | 58 |
+| Iwate | Tohoku | 100 | 97 |
+| Miyagi | Tohoku | 61 | 56 |
+| Akita | Tohoku | 62 | 58 |
+| Yamagata | Tohoku | 63 | 60 |
+| Fukushima | Tohoku | 91 | 88 |
+| Ibaraki | Kanto | 72 | 69 |
+| Tochigi | Kanto | 43 | 40 |
+| Gunma | Kanto | 51 | 48 |
+| Saitama | Kanto | 99 | 96 |
+| Chiba | Kanto | 73 | 69 |
+| Tokyo | Kanto | 82 | 78 |
+| Kanagawa | Kanto | 44 | 42 |
+| Niigata | Chubu | 95 | 92 |
+| Toyama | Chubu | 45 | 42 |
+| Ishikawa | Chubu | 67 | 64 |
+| Fukui | Chubu | 28 | 25 |
+| Yamanashi | Chubu | 36 | 33 |
+| Nagano | Chubu | 86 | 83 |
+| Gifu | Chubu | 96 | 92 |
+| Shizuoka | Chubu | 132 | 129 |
+| Aichi | Chubu | 125 | 122 |
+| Mie | Kansai | 53 | 50 |
+| Shiga | Kansai | 45 | 42 |
+| Kyoto | Kansai | 67 | 61 |
+| Osaka | Kansai | 29 | 27 |
+| Hyogo | Kansai | 59 | 56 |
+| Nara | Kansai | 68 | 65 |
+| Wakayama | Kansai | 63 | 60 |
+| Tottori | Chugoku | 21 | 19 |
+| Shimane | Chugoku | 46 | 44 |
+| Okayama | Chugoku | 38 | 36 |
+| Hiroshima | Chugoku | 66 | 64 |
+| Yamaguchi | Chugoku | 67 | 64 |
+| Tokushima | Shikoku | 17 | 13 |
+| Kagawa | Shikoku | 18 | 15 |
+| Ehime | Shikoku | 44 | 41 |
+| Kochi | Shikoku | 35 | 32 |
+| Fukuoka | Kyushu | 81 | 78 |
+| Saga | Kyushu | 26 | 22 |
+| Nagasaki | Kyushu | 27 | 24 |
+| Kumamoto | Kyushu | 44 | 41 |
+| Oita | Kyushu | 53 | 51 |
+| Miyazaki | Kyushu | 43 | 40 |
+| Kagoshima | Kyushu | 61 | 58 |
+| Okinawa | Kyushu | 29 | 26 |
+
+---
+
+# Highlight collection research
+
+Reviewed October 1, 2026. The original highlight collection contains 147 festival records across all 47 prefectures, up from nine records. This is broad national coverage, not a claim to enumerate every neighbourhood festival in Japan.
 
 ## Research and evidence
 

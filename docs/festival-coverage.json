@@ -1,0 +1,17 @@
+{
+  "records": 2867,
+  "highlights": 147,
+  "local": 2720,
+  "prefectures": 47,
+  "municipalities": 1051,
+  "historical": 33,
+  "undated": 17,
+  "referenceWindow": {
+    "start": "2026-10-01",
+    "end": "2027-10-01"
+  },
+  "occurrences": 3188,
+  "announced": 655,
+  "expected": 344,
+  "seasonal": 2189
+}
