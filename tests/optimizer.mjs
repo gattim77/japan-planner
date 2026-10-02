@@ -28,3 +28,13 @@ assert.equal(availability.total,353);assert.equal(availability.dated,19);assert.
 for(const c of cities.filter(c=>!c.discoveryOnly))assert.ok(route('tokyo',c.id,'Avoid Buses'),'Rail connectivity for '+c.id);
 const naraMust=check({...winterInput,mustAttend:['omizutori']});assert.ok(naraMust.stops.flatMap(s=>s.events).some(e=>e.id==='omizutori'));
 console.log('PASS: February 20–March 18 Tokyo round trip finds',winterEvents.length,'dated festivals; honest calendar counts and expanded rail connectivity.');
+
+// Stay duration is a travel choice, not the length of a festival's run.
+const winterNara=winter.stops.find(s=>s.cityId==='nara'),winterKyoto=winter.stops.find(s=>s.cityId==='kyoto');
+assert.equal(winterNara.nights,1);assert.ok(winterKyoto.nights>=3&&winterKyoto.nights<=4);
+const omizutori=winterNara.events.find(e=>e.id==='omizutori');assert.ok(omizutori.visitPlan.includes('One evening'));assert.ok(omizutori.visitDate>=winterNara.arrival&&omizutori.visitDate<winterNara.departure);
+const march=check({...winterInput,start:'2027-03-01'});assert.ok(march.stops.filter(s=>s.cityId==='nara').every(s=>s.nights<=2));assert.ok(march.stops.filter(s=>s.cityId==='kyoto').every(s=>s.nights>=3&&s.nights<=4));
+const deliberateLongStay=check({...winterInput,locked:[{cityId:'nara',nights:10}]});assert.equal(deliberateLongStay.stops.find(s=>s.cityId==='nara').nights,10);
+const short=check({...winterInput,start:'2027-03-01',end:'2027-03-03',entry:'kyoto',exit:'kyoto'});assert.equal(short.stops.reduce((n,s)=>n+s.nights,0),2);
+const long=check({...winterInput,start:'2027-02-20',end:'2027-04-21'});assert.equal(long.stops.reduce((n,s)=>n+s.nights,0),60);
+console.log('PASS: sensible Kyoto/Nara stays, one-evening Omizutori visit, explicit 10-night override, short trips and 60-night allocation.');

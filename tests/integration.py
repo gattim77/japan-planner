@@ -26,6 +26,9 @@ winter=winter_response['journey'];assert winter['stops'][0]['cityId']==winter['s
 assert sum(s['nights'] for s in winter['stops'])==26
 winter_events=[e for s in winter['stops'] for e in s['events']]
 assert len(winter_events)>=7 and any(e['id']=='omizutori' for e in winter_events)
+assert next(s for s in winter['stops'] if s['cityId']=='nara')['nights']==1
+assert 3<=next(s for s in winter['stops'] if s['cityId']=='kyoto')['nights']<=4
+assert 'One evening' in next(e for e in winter_events if e['id']=='omizutori')['visitPlan']
 assert all(e['confidence'] in ('expected','confirmed') for e in winter_events)
 assert call('/api/planner',{**p,'exit':'unknown'})[0]==400
 journey=j['journey'];assert sum(s['nights'] for s in journey['stops'])==14

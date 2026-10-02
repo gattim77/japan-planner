@@ -69,3 +69,7 @@ Browser regression: October 4–18, 2026, Tokyo start, Maximum Festivals, both a
 ## February–March routing regression
 
 The February 20–March 18, 2027 Tokyo round trip previously returned zero because all 19 dated matches were outside the original 10 overnight bases; the other 334 of 353 discovery matches had unverified seasonal dates. Added rail-connected Nara, Nagoya, Sendai, Hachinohe, Wakayama, Okayama, Kumamoto and Chiba. The exact Maximum Festivals / Balanced / Fastest round trip now returns at least 7 dated opportunities. Calendar and itinerary counts explicitly separate dated opportunities from seasonal matches, and indicate supported-city coverage. No seasonal boundaries are converted into festival dates. Rail topology follows operator sources; times/fares remain estimates.
+
+## Stay allocation
+
+Unlocked stays now use editorial planning ranges, independently of festival run length. Balanced Kyoto stays are 3–4 nights; Nara stays are 1–2, with Omizutori planned as one evening. Extra nights beyond a destination’s target incur diminishing value; Maximum Festivals uses sensible stays before transport tie-breaks. Explicit night locks override ranges. Very long trips or extensive exclusions can extend normal ranges with an explanation. The February 20–March 18, 2027 regression now gives Nara 1 night, Kyoto 4 nights and 8 dated opportunities. Ranges are travel-planning defaults, not authoritative destination limits.
