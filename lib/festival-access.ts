@@ -16,3 +16,8 @@ export function festivalAccess(f:Pick<Festival,'cityId'>){return access.get(f.ci
 export function festivalVenue(f:Pick<Festival,'cityId'>){return cityById.get(f.cityId)?.name??f.cityId}
 // Two source records for the same Tenson Shrine festival; keep saved IDs compatible.
 export function festivalKey(f:Pick<Festival,'id'>){return f.id==='local-c27e2ff9-931c-4970-bede-4d14d50e8bf1'?'jp-25-03':f.id}
+/** Discovery counts must not imply every seasonal match has visitable dates. */
+export function festivalAvailability(events:{confidence:string;cityId:string}[]){
+ const dated=events.filter(e=>e.confidence!=='season');
+ return {total:events.length,dated:dated.length,pending:events.length-dated.length,routable:dated.filter(e=>festivalAccess(e)).length};
+}

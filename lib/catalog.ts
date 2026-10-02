@@ -1,3 +1,4 @@
+import {additionalDestinations} from './additional-destinations.ts';
 import researched from './researched-festivals.ts';
 import local from './local-festivals.ts';
 /** Curated source records. These are not mock records. Annual recurrence is derived,
@@ -16,7 +17,7 @@ export const cities:City[]=[
 {id:'tokushima',name:'Tokushima',ja:'徳島',prefecture:36,region:'Shikoku',lat:34.074,lng:134.551,description:'The birthplace of Awa dance and a gateway to the valleys of Shikoku.',source:'https://discovertokushima.net/en/',tags:['hidden','nature','culture'],attractions:['Awa Odori Kaikan','Mount Bizan'],nights:2},
 {id:'chichibu',name:'Chichibu',ja:'秩父',prefecture:11,region:'Kanto',lat:35.996,lng:139.084,description:'Mountain scenery, pilgrimage routes and a winter float festival west of Tokyo.',source:'https://www.chichibu-omotenashi.com/en/',tags:['nature','hidden','culture'],attractions:['Chichibu Shrine','Hitsujiyama Park'],nights:2},
 ];
-cities.push(...researched.venues.map(c=>({...c,region:regionFor(c.prefecture)})),...local.venues.map(c=>({...c,region:regionFor(c.prefecture)})));
+cities.push(...additionalDestinations,...researched.venues.map(c=>({...c,region:regionFor(c.prefecture)})),...local.venues.map(c=>({...c,region:regionFor(c.prefecture)})));
 export const cityById=new Map(cities.map(c=>[c.id,c]));
 export type RecurrenceRule={kind:'fixed'|'season'|'undated'}|{kind:'weekday';weekday:number;nth:number;startOffset:number;endOffset:number};
 export type Festival={sessions?:{start:string;end:string;source:string}[];archival?:boolean;researchTier?:'highlight'|'local';lastListedStart?:string;lastListedEnd?:string;searchTerms?:string;id:string;name:string;ja:string;cityId:string;type:string;month:number;startDay:number;endDay:number;importance:number;description:string;source:string;image?:string;bestTime:string;recurrence:string;endMonth?:number;rule?:RecurrenceRule;yearParity?:number;announcements?:Record<string,{start:string;end:string;source:string}>;organizerSource?:string|null;scheduleNote?:string;venue?:string;address?:string;coordinatePrecision?:string;dateEvidence?:string};

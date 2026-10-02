@@ -20,6 +20,13 @@ status,m=call('/api/planner',maximum);assert status==200,m
 assert m['journey']['stops'][0]['cityId']=='tokyo' and m['journey']['stops'][-1]['cityId']=='osaka'
 assert any(s['events'] for s in m['journey']['stops'])
 assert any(e['cityId']!=s['cityId'] for s in m['journey']['stops'] for e in s['events'])
+winter_input={**maximum,'start':'2027-02-20','end':'2027-03-18','exit':'tokyo'}
+status,winter_response=call('/api/planner',winter_input);assert status==200,winter_response
+winter=winter_response['journey'];assert winter['stops'][0]['cityId']==winter['stops'][-1]['cityId']=='tokyo'
+assert sum(s['nights'] for s in winter['stops'])==26
+winter_events=[e for s in winter['stops'] for e in s['events']]
+assert len(winter_events)>=7 and any(e['id']=='omizutori' for e in winter_events)
+assert all(e['confidence'] in ('expected','confirmed') for e in winter_events)
 assert call('/api/planner',{**p,'exit':'unknown'})[0]==400
 journey=j['journey'];assert sum(s['nights'] for s in journey['stops'])==14
 assert all(s['events']==[] or all(e['confidence'] in ('expected','confirmed') for e in s['events']) for s in journey['stops'])
