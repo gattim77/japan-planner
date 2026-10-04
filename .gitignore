@@ -46,3 +46,16 @@ next-env.d.ts
 /work/
 
 !.env.example
+
+# Private local credentials, storage and generated files
+.dev.vars*
+!.dev.vars.example
+*.key
+*.p12
+*.pfx
+*.sqlite
+*.sqlite3
+*.db
+*.tsbuildinfo
+*.log
+.cache/

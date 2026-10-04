@@ -1,6 +1,6 @@
 # TABI — Japan Journey Planner
 
-A working map-first Japan travel application. React 19, TypeScript, Next.js App Router APIs through Vinext, Tailwind 4, MapLibre GL, Drizzle and Cloudflare D1. This hosted edition uses platform identity and SQLite/D1 because Sites runs in Workers and provisions durable storage. It does **not** claim to be the entire production product described in the brief.
+A working map-first Japan travel application. React 19, TypeScript, Next.js App Router APIs through Vinext, Tailwind 4, MapLibre GL, Drizzle and Cloudflare D1. This standalone edition runs on Cloudflare Workers and uses email/password accounts with SQLite/D1 storage. It does **not** claim to be the entire production product described in the brief.
 
 ## Working features
 
@@ -9,28 +9,25 @@ A working map-first Japan travel application. React 19, TypeScript, Next.js App 
 - Nine itinerary scoring modes, three paces, realistic intercity service topology, per-stop explanations, hard locked-night / must-attend constraints and destination exclusions.
 - Source-linked catalogue of 2,867 festival and ritual records across all 47 prefectures, with a searchable calendar and month, prefecture, region, collection, category and date-status filters. The original 147 highlights remain available separately. Historical listings are excluded from upcoming matches; multi-session programmes use individual published dates. Occurrences distinguish year-specific **announced** dates, **expected annual** dates and **seasonal** discovery periods. The curated transport network still supports 18 route destinations.
 - Rail-pass economics for national 7/14/21-day passes and Kansai–Hiroshima, per-service eligibility, consecutive activation windows, uncovered tickets and online/agency price channels.
-- Durable private saved trips, rename, duplicate, archive, delete, regeneration snapshots, restoration, explicit token sharing and revocation. Shared URLs remain behind the private Site audience.
+- Durable private saved trips, rename, duplicate, archive, delete, regeneration snapshots, restoration, explicit token sharing and revocation. Shared URLs respect the deployment’s private-site setting.
 - Durable festival priorities and notes; My Matsuri cards, calendar and map; visited status; search and light/dark UI.
 - Server ownership checks, prepared SQL, bounded request validation, no browser storage for authoritative product data. Only theme is stored locally.
 
 ## Important scope limits
 
-This is a functional first release, **not production-complete**. Email/password, Google and Apple OAuth are not configured: hosted sign-in uses ChatGPT/Sites. There is no PostgreSQL deployment or Prisma schema. The festival catalogue is broad but not exhaustive; the transport network and attraction coverage remain limited; the UI explicitly identifies missing details. Full prefecture tourism profiles, attraction opening hours / pricing / photography restrictions, comprehensive seasonal datasets, all regional/private passes, pass stacking, end-to-end real-time timetable routing and live fare quotes remain to be integrated. Travel durations and fares are labelled curated planning estimates; no booking availability is implied. Route geometry joins stops schematically, not along tracks. Hotel changes are penalized, but the optimizer is a bounded beam-search heuristic, not a proof of global optimality. Saved city preferences are scoped to a trip, not a standalone cross-trip favourites library. Day/night service availability is not modelled; “Night Transport Allowed” permits no extra services yet.
+This is a functional first release, **not production-complete**. Email/password sign-in is configured. Google, Apple, email verification and automatic password recovery are not configured. There is no PostgreSQL deployment or Prisma schema. The festival catalogue is broad but not exhaustive; the transport network and attraction coverage remain limited; the UI explicitly identifies missing details. Full prefecture tourism profiles, attraction opening hours / pricing / photography restrictions, comprehensive seasonal datasets, all regional/private passes, pass stacking, end-to-end real-time timetable routing and live fare quotes remain to be integrated. Travel durations and fares are labelled curated planning estimates; no booking availability is implied. Route geometry joins stops schematically, not along tracks. Hotel changes are penalized, but the optimizer is a bounded beam-search heuristic, not a proof of global optimality. Saved city preferences are scoped to a trip, not a standalone cross-trip favourites library. Day/night service availability is not modelled; “Night Transport Allowed” permits no extra services yet.
 
-## Setup
+## Cloudflare deployment
 
-Use Node >=22.13 and npm. `npm ci`, `npm run db:generate`, `npm run build`. No secrets are shipped. Copy `.env.example` only when adding a licensed transport provider; do not expose provider credentials to browser code.
+Use Node >=22.13 and npm. Run `npm ci`, `npm run db:migrate:local`, `npm run typecheck`, `npm test`, and `npm run build`.
 
-The logical D1 binding is `DB` in `.openai/hosting.json`. Production migrations in `drizzle/` are generated by Drizzle and applied by hosting. Do not alter already applied migration history. For local development:
+The Worker is `japan-planner`, with a separate D1 database and custom domain `japan-planner.third-ai.com`. Cloudflare Workers Builds uses branch `main`, build command `npm run build` and deploy command `npm run deploy:built`. Database migrations run before publishing the built Worker; deployments preserve dashboard secrets. Preview URLs and workers.dev are disabled.
 
-```sh
-npm run dev
-# First build generates the local Worker binding configuration.
-npm run build
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_fresh_bloodaxe.sql
-```
+The default configuration is **private**: only a signed-in account matching `OWNER_EMAIL` can access pages and APIs. Configure `SETUP_KEY` as a Worker secret, then the owner can create their account at `/register` using that invitation. Password entry belongs to the owner; never commit passwords or invitation values. Remove the setup secret after account creation. Do not switch to public mode until that behavior is intended: `PRIVATE_SITE=false` allows visitors to plan and register, while saved trips still require an authenticated account and remain isolated by owner.
 
-Local sign-in uses the starter's loopback-only `/signin-with-chatgpt` mock. It strips supplied identity headers. Production identity is supplied by the trusted Sites dispatcher. Never expose the Worker directly without a trusted authentication gateway that strips client identity headers.
+Sessions use hashed random tokens stored in D1 and HttpOnly, Secure, SameSite cookies. Caller-supplied ChatGPT identity headers are ignored. Passwords are salted PBKDF2 hashes, login failures trigger temporary lockout, and authentication mutations require same-origin requests. Session expiry is 30 days. No credentials are shipped in source. The separate Sites deployment and its saved data are untouched; migrating existing personal records requires an authenticated export and explicit ownership mapping.
+
+For local testing, copy `.dev.vars.example` to `.dev.vars`, then build and start with `npm run start -- --port 8795 --var PRIVATE_SITE:false`. Synthetic tests must target localhost, never production.
 
 ## Architecture and provenance
 
@@ -45,12 +42,12 @@ mkdir -p work
 node --experimental-strip-types scripts/import-catalog.ts > work/catalog.sql
 # Review the generated SQL. Then apply locally or through an authorized production
 # data workflow; do not put seed datasets into Drizzle schema migrations.
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file work/catalog.sql
+npx wrangler d1 execute DB --local --config wrangler.json --persist-to .wrangler/state --file work/catalog.sql
 ```
 
 ## Validation
 
-`node tests/catalogue.mjs`, `npx tsc --noEmit` and `npm run build`. Catalogue tests cover the rolling horizon, leap years, drag boundaries, recurrence rules, evidence status and all 47 prefectures. `tests/integration.py` targets a **local built Worker** with synthetic identities; it checks dates, nights, locks, must-attend conflicts, actual D1 trip persistence, ownership isolation, snapshots, restore, explicit sharing/revocation and saved festivals. Run the local Worker with `npm run start`, then `API_BASE=http://127.0.0.1:8787 python3 tests/integration.py`. Never aim this test at production. The browser WebMCP tool changes the current date window only and does not save or book anything.
+`node tests/catalogue.mjs`, `npx tsc --noEmit` and `npm run build`. Catalogue tests cover the rolling horizon, leap years, drag boundaries, recurrence rules, evidence status and all 47 prefectures. `tests/integration.py` targets a **local built Worker** with synthetic email accounts; it checks dates, nights, locks, must-attend conflicts, actual D1 trip persistence, ownership isolation, snapshots, restore, explicit sharing/revocation and saved festivals. Run the local Worker with `npm run start`, then `API_BASE=http://127.0.0.1:8795 python3 tests/integration.py`. Never aim this test at production. The browser WebMCP tool changes the current date window only and does not save or book anything.
 
 ## Sources and licensing
 

@@ -1,5 +1,5 @@
 {
-  "name": "site-creator-vinext-starter",
+  "name": "japan-planner",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -11,7 +11,13 @@
     "build": "node scripts/run-framework.mjs build",
     "start": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "typecheck": "tsc --noEmit",
+    "test": "node tests/optimizer.mjs && node tests/catalogue.mjs",
+    "deploy": "npm run build && npm run deploy:built",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "deploy:built": "wrangler d1 migrations apply DB --remote --config wrangler.json && wrangler deploy --config dist/server/wrangler.json --keep-vars"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

@@ -3,13 +3,29 @@ import json,urllib.request,urllib.error,uuid,os
 BASE=os.environ.get('API_BASE','http://127.0.0.1:8787');
 assert BASE.startswith('http://127.0.0.1:') or BASE.startswith('http://localhost:'), 'Tests must run locally.'
 owner='qa-'+str(uuid.uuid4())
+sessions={}
 def call(path,body=None,who=owner,method=None):
- h={'Content-Type':'application/json'}
+ h={'Content-Type':'application/json','Origin':BASE}
+ if who in sessions:h['Cookie']=sessions[who]
  if who:h['oai-authenticated-user-id']=who;h['oai-authenticated-user-email']='qa@sites.test'
  q=urllib.request.Request(BASE+path,data=json.dumps(body).encode() if body is not None else None,headers=h,method=method or ('POST' if body is not None else 'GET'))
  try:
   with urllib.request.urlopen(q) as r:return r.status,json.load(r)
  except urllib.error.HTTPError as e:return e.code,json.load(e)
+def register(who):
+ email=who+'@example.test'
+ data=json.dumps({'name':'Local test','email':email,'password':'local-test-password-123'}).encode()
+ req=urllib.request.Request(BASE+'/api/auth/register',data=data,headers={'Content-Type':'application/json','Origin':BASE})
+ with urllib.request.urlopen(req) as r:
+  assert r.status==200
+  sessions[who]=r.headers['Set-Cookie'].split(';')[0]
+ return email
+owner_email=register(owner)
+register('different-user')
+# External identity headers cannot authenticate an anonymous caller.
+assert call('/api/account',who='spoofed-user')[0]==401
+assert call('/api/auth/login',{'email':owner_email,'password':'wrong-password'},who=None)[0]==401
+assert call('/api/auth/login',{'email':owner_email,'password':'local-test-password-123'},who=None)[0]==200
 p={'start':'2026-10-03','end':'2026-10-17','mode':'Balanced Japan','intensity':'Balanced','transport':'Fastest','entry':'tokyo','locked':[],'excluded':[],'mustAttend':[],'saved':[]}
 status,catalog=call('/api/planner?start=2026-10-01&end=2027-10-01');assert status==200 and catalog['coverage']['records']>2500 and catalog['coverage']['prefectures']==47,catalog
 assert call('/api/planner?start=2026-02-30&end=2026-03-02')[0]==400
@@ -59,3 +75,7 @@ call('/api/saved-events',{'eventId':'jidai','priority':'Interested','remove':Tru
 assert call('/api/trips/'+id,method='DELETE')[0]==200
 assert not any(t['id']==id for t in call('/api/trips')[1]['trips'])
 print('PASS: itinerary constraints, date validation, transport legs, authentication, ownership, durable trips, versions, share revocation and festival persistence.')
+
+assert call('/api/auth/logout',{},who=owner)[0]==200
+assert call('/api/account',who=owner)[0]==401
+print('Local integration: accounts, session revocation, ownership, festival route and persistence passed')
