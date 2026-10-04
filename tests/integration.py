@@ -21,7 +21,8 @@ def register(who):
   sessions[who]=r.headers['Set-Cookie'].split(';')[0]
  return email
 owner_email=register(owner)
-register('different-user')
+other_user='other-'+str(uuid.uuid4())
+register(other_user)
 # External identity headers cannot authenticate an anonymous caller.
 assert call('/api/account',who='spoofed-user')[0]==401
 assert call('/api/auth/login',{'email':owner_email,'password':'wrong-password'},who=None)[0]==401
@@ -61,7 +62,7 @@ assert call('/api/planner',{**p,'end':'2026-10-04','mustAttend':['takayama-autum
 assert call('/api/trips',who=None)[0]==401
 status,t=call('/api/trips',{'name':'Integration test journey','input':q});assert status==201,t
 id=t['id'];stored=next(t for t in call('/api/trips')[1]['trips'] if t['id']==id);assert stored['payload']['input']['exit']=='kyoto';assert stored['payload']['journey']['stops'][-1]['cityId']=='kyoto'
-assert call('/api/trips/'+id,{'action':'rename','name':'Not yours'},who='different-user',method='PATCH')[0]!=200
+assert call('/api/trips/'+id,{'action':'rename','name':'Not yours'},who=other_user,method='PATCH')[0]!=200
 assert call('/api/trips/'+id,{'action':'regenerate','input':q},method='PATCH')[0]==200
 versions=call('/api/trips/'+id)[1]['versions'];assert len(versions)==1
 assert call('/api/trips/'+id,{'action':'restore','versionId':versions[0]['id']},method='PATCH')[0]==200
@@ -70,7 +71,7 @@ assert call('/api/share/'+link['token'],who=None)[0]==200
 call('/api/trips/'+id,{'action':'unshare'},method='PATCH');assert call('/api/share/'+link['token'],who=None)[0]==404
 assert call('/api/saved-events',{'eventId':'jidai','priority':'High Priority','notes':'Local test'})[0]==200
 assert any(e['event_id']=='jidai' for e in call('/api/saved-events')[1]['events'])
-assert call('/api/saved-events',who='different-user')[1]['events']==[]
+assert call('/api/saved-events',who=other_user)[1]['events']==[]
 call('/api/saved-events',{'eventId':'jidai','priority':'Interested','remove':True})
 assert call('/api/trips/'+id,method='DELETE')[0]==200
 assert not any(t['id']==id for t in call('/api/trips')[1]['trips'])

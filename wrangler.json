@@ -30,8 +30,5 @@
   "observability": {
     "enabled": true
   },
-  "vars": {
-    "PRIVATE_SITE": "true",
-    "OWNER_EMAIL": "gattim@gmail.com"
-  }
+  "vars": {}
 }

@@ -17,7 +17,8 @@
     "deploy": "npm run build && npm run deploy:built",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "deploy:built": "wrangler d1 migrations apply DB --remote --config wrangler.json && wrangler deploy --config dist/server/wrangler.json --keep-vars"
+    "deploy:built": "wrangler d1 migrations apply DB --remote --config wrangler.json && wrangler deploy --config dist/server/wrangler.json --keep-vars",
+    "test:auth": "node --experimental-strip-types tests/google-token.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -30,6 +31,7 @@
     "drizzle-orm": "0.45.2",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
+    "jose": "^6.2.12",
     "lucide-react": "^1.31.0",
     "maplibre-gl": "^6.11.2",
     "next": "16.3.4",

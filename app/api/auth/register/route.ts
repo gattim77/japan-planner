@@ -1,6 +1,4 @@
 import {body as readBody} from '@/lib/server';
-import {env} from 'cloudflare:workers';
-import {privateSite, digest} from '@/lib/auth-storage';
 import { createSession, normalizeDisplayName, normalizeEmail, passwordHash, safeReturnTo, sessionCookie } from '@/lib/auth';
 import { database, safeOrigin } from '@/lib/auth-storage';
 
@@ -9,11 +7,6 @@ export async function POST(request: Request) {
   const body = await readBody(request).catch(() => null) as Record<string, unknown> | null;
   const email = normalizeEmail(body?.email);
   const password = typeof body?.password === 'string' ? body.password : '';
-  if(privateSite()) {
-    const invitation = typeof body?.invitation === 'string' ? body.invitation : '';
-    if(!env.SETUP_KEY || !env.OWNER_EMAIL || email !== env.OWNER_EMAIL.toLowerCase() || await digest(invitation) !== await digest(env.SETUP_KEY))
-      return Response.json({error:'This is a private travel space. An owner invitation is required.'},{status:403});
-  }
   if (!email) return Response.json({ error: 'Enter a valid email address.' }, { status: 400 });
   if (password.length < 10 || password.length > 200) return Response.json({ error: 'Use a password of 10 to 200 characters.' }, { status: 400 });
   const existing = await database().prepare('SELECT id FROM app_users WHERE email = ?').bind(email).first();
