@@ -42,5 +42,6 @@ export default function AuthForm({ mode, returnTo, googleEnabled, initialError }
     </form>
     <p>{register ? 'Already have an account?' : 'Need an account?'} <a href={`${register ? '/login' : '/register'}?returnTo=${encodeURIComponent(returnTo)}`}>{register ? 'Sign in' : 'Create account'}</a></p>
     <a href={returnTo}>Continue exploring Japan</a>
+    <p><a href="/privacy">Privacy</a></p>
   </section></main>;
 }
