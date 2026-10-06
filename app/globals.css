@@ -46,3 +46,6 @@
  .menu-close{display:flex;position:absolute;top:8px;right:8px;padding:6px;color:#acbec0}
  .menu-backdrop{display:block;position:fixed;inset:0;background:#0006;z-index:45;border:0}
 }
+
+.desktop-menu{display:none}
+@media(min-width:851px){.desktop-menu{display:flex;padding:5px}.rail.desktop-closed{display:none}.rail .menu-close{display:flex;position:absolute;top:8px;right:8px;padding:6px;color:#acbec0}}
