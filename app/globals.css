@@ -25,3 +25,24 @@
 .auth-shell{min-height:100vh;display:grid;place-items:center;background:#f8f7f2;padding:32px;color:#25303b}.auth-card{width:min(100%,440px);background:white;border:1px solid #e0e0d7;border-radius:16px;padding:36px}.auth-brand{display:block;color:#25303b;text-decoration:none;font-size:24px}.auth-brand small{display:block;font-size:10px;letter-spacing:2px;margin:8px 0 32px}.auth-card h1{font-size:32px;margin-bottom:16px}.auth-card p{line-height:1.6;margin:16px 0}.auth-card form{display:grid;gap:20px}.auth-card label{display:grid;gap:8px}.auth-card input{border:1px solid #d7d8d3;border-radius:8px;padding:12px;background:white;color:#25303b}.auth-card a:not(.auth-brand){color:#db533d}.auth-card small{font-size:12px}
 
 .auth-google{width:100%;padding:12px;border:1px solid #747775;border-radius:8px;background:white;color:#1f1f1f;font-weight:600;cursor:pointer}.auth-google:hover{background:#f6f7f7}.auth-divider{display:flex;align-items:center;gap:12px;margin:24px 0;color:#727a80;font-size:13px}.auth-divider:before,.auth-divider:after{content:"";height:1px;flex:1;background:#e0e0d7}
+
+/* Account access belongs immediately below the navigation branding. */
+.rail .brand{padding-bottom:20px}
+.rail .menu-account{display:flex;align-items:center;gap:10px;border:1px solid #345058;border-radius:6px;padding:12px 10px;margin-bottom:24px;color:#eef3f1;text-decoration:none;text-align:left;width:100%;font-size:12px}
+.menu-account:hover,.menu-account:focus-visible{background:#27434a;border-color:#91a7a9}
+.menu-account>svg{flex-shrink:0;color:#e58b71}
+.menu-account div{min-width:0}
+.menu-account small{font-size:10px;color:#a4bbbe;line-height:1.4}
+.menu-close,.menu-backdrop{display:none}
+@media(max-width:850px){
+ .rail{display:none}
+ .mobile-menu{display:flex}
+ .rail.mobile-open{display:flex;position:fixed;z-index:50;top:0;left:0;width:min(280px,calc(100vw - 40px));height:100dvh;padding:28px 20px 20px;overflow-y:auto;box-shadow:20px 0 30px #0003}
+ .rail.mobile-open .brand{display:grid;grid-template-columns:42px 1fr;padding:0 8px 20px}
+ .rail.mobile-open .brand b,.rail.mobile-open .brand small,.rail.mobile-open .nav-label,.rail.mobile-open .rail-bottom{display:block}
+ .rail.mobile-open nav button span{display:block;font-size:12px}
+ .rail.mobile-open nav [data-slot=sidebar-menu-button]{width:100%;height:auto;gap:10px}
+ .rail.mobile-open .rail-bottom{padding-top:24px}
+ .menu-close{display:flex;position:absolute;top:8px;right:8px;padding:6px;color:#acbec0}
+ .menu-backdrop{display:block;position:fixed;inset:0;background:#0006;z-index:45;border:0}
+}
